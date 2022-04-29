@@ -53,18 +53,22 @@ EOF
 
 # CA Cert
 # Create private key for local CA
-/usr/bin/openssl genrsa -des3 -out local_ca.key -passout pass:"$CA_KEYPASSWORD" 2048
+/usr/bin/openssl genrsa -des3 -out local-ca.key -passout pass:"$CA_KEYPASSWORD" 2048
 
 # Create root certificate
-/usr/bin/openssl req -x509 -new -nodes -key local_ca.key -sha256 -days "$CA_DAYS" -passin pass:"$CA_KEYPASSWORD" -subj "/C=$CA_COUNTRY/ST=$CA_STATE/L=$CA_LOCATION/O=$CA_ORG/OU=$CA_UNIT/CN=$CA_CN/emailAddress=$CA_EMAIL" -out local_ca.pem
+/usr/bin/openssl req -x509 -new -nodes -key local-ca.key -sha256 -days "$CA_DAYS" -passin pass:"$CA_KEYPASSWORD" -subj "/C=$CA_COUNTRY/ST=$CA_STATE/L=$CA_LOCATION/O=$CA_ORG/OU=$CA_UNIT/CN=$CA_CN/emailAddress=$CA_EMAIL" -out local-ca.crt
 
 # Certificate
-# Create prevate key for host
+# Create private key for host
 /usr/bin/openssl genrsa -des3 -out "$CERT_CN.key" -passout pass:"$CERT_KEYPASSWORD" 2048
 
 # Generate Certificate Signing Request
 /usr/bin/openssl req -new -key "$CERT_CN.key" -out "$CERT_CN.csr" -passin pass:"$CERT_KEYPASSWORD" -days $CERT_DAYS -subj "/C=$CERT_COUNTRY/ST=$CERT_STATE/L=$CERT_LOCATION/O=$CERT_ORG/OU=$CERT_UNIT/CN=$CERT_CN/emailAddress=$CERT_EMAIL"
 
+# Remove the password from the private key
+/usr/bin/cp "$CERT_CN.key" "$CERT_CN.key.original"
+/usr/bin/openssl rsa -in "$CERT_CN.key.original" -out "$CERT_CN.key" -passin pass:"$CERT_KEYPASSWORD"
+
 # Create Certificate
-openssl x509 -req -in "$CERT_CN.csr" -CA local_ca.pem -CAkey local_ca.key -CAcreateserial -passin pass:"$CA_KEYPASSWORD" -out "$CERT_CN.pem" -days "$CERT_DAYS" -sha256 -extfile "$CERT_CN.ext"
+openssl x509 -req -in "$CERT_CN.csr" -CA local-ca.crt -CAkey local-ca.key -CAcreateserial -passin pass:"$CA_KEYPASSWORD" -out "$CERT_CN.crt" -days "$CERT_DAYS" -sha256 -extfile "$CERT_CN.ext"
 

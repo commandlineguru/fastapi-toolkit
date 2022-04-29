@@ -132,8 +132,9 @@ dmypy.json
 .idea
 
 # Certs
-*.key
+*.key*
 *.pem
+*.crt
 *.srl
 *.csr
 *.ext
